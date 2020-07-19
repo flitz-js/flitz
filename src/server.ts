@@ -375,14 +375,14 @@ function mergeHandler(
   getErrorHandler: () => RequestErrorHandler
 ): RequestHandler {
   return async function (req, res) {
-    let i = 0;
+    let i = -1;
 
     const handleError = (err: any) => {
       return getErrorHandler()(err, req, res);
     };
 
     const next = () => {
-      const mw = middlewares[i++];
+      const mw = middlewares[++i];
 
       if (mw) {
         mw(req, res, next).catch(handleError);
