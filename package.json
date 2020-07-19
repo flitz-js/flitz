@@ -1,6 +1,6 @@
 {
   "name": "flitz",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A lightweight and extremly fast HTTP server with all basics.",
   "main": "lib/index.js",
   "files": [
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mkloubert/flitz.git"
+    "url": "git+https://github.com/flitz-js/flitz.git"
   },
   "keywords": [
     "http",
@@ -24,6 +24,7 @@
     "http2",
     "server",
     "micro",
+    "microservice",
     "tiny",
     "lightweight",
     "fast",
@@ -32,9 +33,9 @@
   "author": "Marcel Joachim Kloubert <marcel.kloubert@gmx.net>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mkloubert/flitz/issues"
+    "url": "https://github.com/flitz-js/flitz/issues"
   },
-  "homepage": "https://github.com/mkloubert/flitz#readme",
+  "homepage": "https://github.com/flitz-js/flitz#readme",
   "devDependencies": {
     "@types/node": "^10.17.27",
     "@typescript-eslint/eslint-plugin": "^3.6.1",
