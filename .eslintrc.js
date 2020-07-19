@@ -1,5 +1,4 @@
 module.exports = {
-  extends: "ego",
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "tsconfig.json",
@@ -14,6 +13,9 @@ module.exports = {
   ],
   rules: {
     "comma-dangle": ["error", "never"],
+    "quote-props": ["error", "as-needed", {
+      "numbers": true
+    }],
     "@typescript-eslint/indent": ["error", 2],
   },
 };

@@ -18,19 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { createServer } from './server';
+import { IncomingMessage, ServerResponse } from 'http';
+import { NotFoundHandler, RequestErrorHandler } from '.';
 
 /**
- * A type, which can be null or undefined.
+ * The default error handler.
  */
-export type CanBeNil<T> = T | null | undefined;
+export const defaultErrorHandler: RequestErrorHandler = async (err: any, req: IncomingMessage, res: ServerResponse): Promise<any> => {
+  console.error('[flitz]', err);
+
+  if (!res.headersSent) {
+    res.writeHead(500);
+  }
+
+  res.end();
+};
 
 /**
- * A type, which can be undefined.
+ * The default 'not found' handler.
  */
-export type IsOptional<T> = T | undefined;
-
-export * from './handlers';
-export * from './server';
-
-export default createServer;
+export const defaultNotFoundHandler: NotFoundHandler = async (req: IncomingMessage, res: ServerResponse): Promise<any> => {
+  res.writeHead(404);
+  res.end();
+};
