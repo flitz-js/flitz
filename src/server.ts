@@ -429,9 +429,7 @@ function withMethod(opts: WithMethodOptions): Flitz {
   }
 
   // setup request handler
-  if (!options?.use?.length) {
-    handler = handler.bind(opts.server);
-  } else {
+  if (options?.use?.length) {
     handler = mergeHandler(
       handler.bind(opts.server),
       options.use.map(mw => mw.bind(opts.server)),
@@ -450,8 +448,8 @@ function withMethod(opts: WithMethodOptions): Flitz {
   }
 
   opts.groupedHandlers[opts.method].push({
-    handler,
-    isPathValid
+    handler: handler.bind(opts.server),
+    isPathValid: isPathValid.bind(opts.server)
   });
 
   return opts.server;
