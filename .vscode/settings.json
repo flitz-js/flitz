@@ -1,0 +1,10 @@
+{
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "eslint.quiet": false,
+  "eslint.enable": true,
+  "eslint.workingDirectories": ["./"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "name": "flitz",
+  "version": "0.0.1",
+  "description": "A lightweight and extremly fast HTTP server with all basics.",
+  "main": "lib/index.js",
+  "files": [
+    "lib/**/*"
+  ],
+  "scripts": {
+    "build": "del ./lib && tsc -p ./tsconfig.json",
+    "lint": "eslint -c .eslintrc.js --ext .ts <mySrcFolder>",
+    "lint:fix": "eslint --fix -c .eslintrc.js --ext .ts <mySrcFolder>"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mkloubert/flitz.git"
+  },
+  "keywords": [
+    "http",
+    "https",
+    "http2",
+    "server",
+    "micro",
+    "tiny",
+    "lightweight",
+    "fast",
+    "node"
+  ],
+  "author": "Marcel Joachim Kloubert <marcel.kloubert@gmx.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mkloubert/flitz/issues"
+  },
+  "homepage": "https://github.com/mkloubert/flitz#readme",
+  "devDependencies": {
+    "@types/node": "^10.17.27",
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/eslint-plugin-tslint": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "del-cli": "^3.0.1",
+    "eslint": "^7.5.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jsdoc": "^30.0.0",
+    "eslint-plugin-no-null": "^1.0.2",
+    "eslint-plugin-unicorn": "^21.0.0",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.7"
+  }
+}
