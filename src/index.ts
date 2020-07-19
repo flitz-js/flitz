@@ -20,6 +20,10 @@
 
 import { createServer } from './server';
 
+exports = module.exports = function () {
+  return createServer.apply(null, arguments as any);
+};
+
 /**
  * A type, which can be null or undefined.
  */

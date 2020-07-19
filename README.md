@@ -17,7 +17,7 @@ from the folder, where your `package.json` is stored.
 ## Usage
 
 ```javascript
-const flitz = require('flitz').default;
+const flitz = require('flitz');
 
 const run = async () => {
   const app = flitz();
