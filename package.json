@@ -1,6 +1,6 @@
 {
   "name": "flitz",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "A lightweight and extremly fast HTTP server with all basics.",
   "main": "lib/index.js",
   "files": [
@@ -45,6 +45,7 @@
     "@typescript-eslint/parser": "^3.6.1",
     "del-cli": "^3.0.1",
     "eslint": "^7.5.0",
+    "eslint-config-flitz": "0.1.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jsdoc": "^30.0.0",
     "eslint-plugin-no-null": "^1.0.2",
