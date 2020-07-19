@@ -1,5 +1,5 @@
 {
-  "extends": "@flitz/dev-config",
+  "extends": "@flitz/tsconfig",
   "compilerOptions": {
     "outDir": "lib",
     "rootDir": "src"

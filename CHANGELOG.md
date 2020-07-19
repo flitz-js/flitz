@@ -1,5 +1,5 @@
 # flitz
 
-## 0.3.7
+## 0.3.8
 
 initial release
