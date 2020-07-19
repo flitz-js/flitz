@@ -18,11 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { createServer } from './server';
+import { createServer, Flitz } from './server';
 
-exports = module.exports = function () {
+const serverFactory = function (): Flitz {
   return createServer.apply(null, arguments as any);
 };
+
+exports = module.exports = serverFactory;
 
 /**
  * A type, which can be null or undefined.
