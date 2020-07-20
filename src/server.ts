@@ -42,41 +42,41 @@ export interface Flitz {
    * Registers a route for a CONNECT request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   connect(path: RequestPath, handler: RequestHandler): this;
-  connect(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  connect(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 
   /**
    * Registers a route for a DELETE request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   delete(path: RequestPath, handler: RequestHandler): this;
-  delete(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  delete(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 
   /**
    * Registers a route for a GET request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   get(path: RequestPath, handler: RequestHandler): this;
-  get(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  get(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 
   /**
    * Registers a route for a HEAD request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   head(path: RequestPath, handler: RequestHandler): this;
-  head(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  head(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 
   /**
    * The underlying HTTP server instance.
@@ -95,41 +95,41 @@ export interface Flitz {
    * Registers a route for a OPTIONS request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   options(path: RequestPath, handler: RequestHandler): this;
-  options(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  options(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 
   /**
    * Registers a route for a PATCH request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   patch(path: RequestPath, handler: RequestHandler): this;
-  patch(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  patch(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 
   /**
    * Registers a route for a POST request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   post(path: RequestPath, handler: RequestHandler): this;
-  post(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  post(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 
   /**
    * Registers a route for a PUT request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   put(path: RequestPath, handler: RequestHandler): this;
-  put(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  put(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 
   /**
    * Sets a new error handler.
@@ -153,11 +153,11 @@ export interface Flitz {
    * Registers a route for a TRACE request.
    * 
    * @param {RequestPath} path The path.
-   * @param {RequestHandlerOptions} options The options for the handler.
+   * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
    * @param {RequestHandler} handler The handler.
    */
   trace(path: RequestPath, handler: RequestHandler): this;
-  trace(path: RequestPath, options: RequestHandlerOptions, handler: RequestHandler): this;
+  trace(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 }
 
 /**
@@ -181,6 +181,11 @@ export type NextFunction = () => void;
  * @param {ServerResponse} response The response context.
  */
 export type NotFoundHandler = (request: IncomingMessage, response: ServerResponse) => Promise<any>;
+
+/**
+ * Request handler options or list of middlewares.
+ */
+export type OptionsOrMiddlewares = RequestHandlerOptions | Middleware[];
 
 /**
  * A request context.
@@ -407,20 +412,42 @@ function withMethod(opts: WithMethodOptions): Flitz {
     throw new TypeError('path must be of type string, function or RegEx');
   }
 
-  let options: CanBeNil<RequestHandlerOptions>;
+  let optionsOrMiddlewares: CanBeNil<OptionsOrMiddlewares>;
   let handler: RequestHandler;
   if (opts.args.length < 3) {
     // args[1]: RequestHandler
     handler = opts.args[1];
   } else {
-    // args[1]: RequestHandlerOptions
+    // args[1]: OptionsOrMiddlewares
     // args[2]: RequestHandler
-    options = opts.args[1];
+    optionsOrMiddlewares = opts.args[1];
     handler = opts.args[2];
   }
 
   if (typeof handler !== 'function') {
     throw new TypeError('Error must be a function');
+  }
+
+  let options: RequestHandlerOptions;
+  if (optionsOrMiddlewares) {
+    if (Array.isArray(optionsOrMiddlewares)) {
+      options = {
+        use: optionsOrMiddlewares
+      };
+    } else {
+      options = optionsOrMiddlewares;
+    }
+  } else {
+    options = {};
+  }
+
+  if (typeof options !== 'object') {
+    throw new TypeError('optionsOrMiddlewares must be an object or array');
+  }
+  if (options.use?.length) {
+    if (!options.use.every(mw => typeof mw === 'function')) {
+      throw new TypeError('optionsOrMiddlewares must be an array of functions');
+    }
   }
 
   if (!opts.groupedHandlers[opts.method]) {
@@ -429,7 +456,7 @@ function withMethod(opts: WithMethodOptions): Flitz {
   }
 
   // setup request handler
-  if (options?.use?.length) {
+  if (options.use?.length) {
     handler = mergeHandler(
       handler.bind(opts.server),
       options.use.map(mw => mw.bind(opts.server)),
