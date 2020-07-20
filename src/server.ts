@@ -230,11 +230,11 @@ export type RequestPath = string | RegExp | RequestPathValidator;
 /**
  * Validates a request path.
  * 
- * @param {string} path The path to check.
+ * @param {IncomingMessage} request The request context.
  * 
  * @returns {boolean} Path does match or not.
  */
-export type RequestPathValidator = (path: string) => boolean;
+export type RequestPathValidator = (request: IncomingMessage) => boolean;
 
 /**
  * A response context.
@@ -264,7 +264,7 @@ export function createServer(): Flitz {
 
   const flitz: any = async (req: IncomingMessage, res: ServerResponse) => {
     try {
-      const handler = groupedHandlers[req.method!]?.find(ctx => ctx.isPathValid(req.url!))?.handler;
+      const handler = groupedHandlers[req.method!]?.find(ctx => ctx.isPathValid(req))?.handler;
 
       if (handler) {
         await handler(req, res);
@@ -442,9 +442,9 @@ function withMethod(opts: WithMethodOptions): Flitz {
   if (typeof path === 'function') {
     isPathValid = path;
   } else if (path instanceof RegExp) {
-    isPathValid = (p) => path.test(p);
+    isPathValid = (req) => path.test(req.url!);
   } else {
-    isPathValid = (p) => p === path;
+    isPathValid = (req) => req.url === path;
   }
 
   opts.groupedHandlers[opts.method].push({
