@@ -1,6 +1,6 @@
 # flitz
 
-## 0.4.0
+## 0.4.1
 
 * [BREAKING CHANGE]: `RequestPathValidator` type gets an `IncomingMessage` object as argument instead a string now
 
