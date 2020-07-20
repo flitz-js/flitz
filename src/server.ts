@@ -255,6 +255,14 @@ interface WithMethodOptions {
   method: string;
 }
 
+function isPathValidByRegex(path: RegExp) {
+  return (req: IncomingMessage) => path.test(req.url!);
+}
+
+function isPathValidByString(path: string) {
+  return (req: IncomingMessage) => req.url === path;
+}
+
 /**
  * Creates a new server instance.
  * 
@@ -458,8 +466,8 @@ function withMethod(opts: WithMethodOptions): Flitz {
   // setup request handler
   if (options.use?.length) {
     handler = mergeHandler(
-      handler.bind(opts.server),
-      options.use.map(mw => mw.bind(opts.server)),
+      handler,
+      options.use.map(mw => mw),
       opts.getErrorHandler
     );
   }
@@ -469,14 +477,14 @@ function withMethod(opts: WithMethodOptions): Flitz {
   if (typeof path === 'function') {
     isPathValid = path;
   } else if (path instanceof RegExp) {
-    isPathValid = (req) => path.test(req.url!);
+    isPathValid = isPathValidByRegex(path);
   } else {
-    isPathValid = (req) => req.url === path;
+    isPathValid = isPathValidByString(path);
   }
 
   opts.groupedHandlers[opts.method].push({
-    handler: handler.bind(opts.server),
-    isPathValid: isPathValid.bind(opts.server)
+    handler,
+    isPathValid
   });
 
   return opts.server;

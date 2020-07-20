@@ -1,5 +1,9 @@
 # flitz
 
+## 0.6.0
+
+* [BREAKING CHANGE]: functions (handlers, middlewares) are not wrapped with `bind()` anymore
+
 ## 0.5.3
 
 * `options` can also be an array of functions now
