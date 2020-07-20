@@ -3,7 +3,7 @@ on:
   pull_request:
     types: ["opened", "edited", "reopened", "synchronize"]
 jobs:
-  build:
+  check-pr:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

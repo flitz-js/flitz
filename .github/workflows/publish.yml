@@ -4,7 +4,7 @@ on:
     branches:
       - master
 jobs:
-  check-pr:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
