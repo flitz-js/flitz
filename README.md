@@ -2,7 +2,7 @@
 
 # flitz
 
-> *flitz* [[**ˈflɪt͡s**](https://en.wikipedia.org/wiki/Naming_conventions_of_the_International_Phonetic_Alphabet)] is a lightweight and extremly fast HTTP server with all basics for [Node 10+](https://nodejs.org/docs/latest-v10.x/api/http.html), wriiten in [TypeScript](https://www.typescriptlang.org/).
+> *flitz* [[**ˈflɪt͡s**](https://en.wikipedia.org/wiki/Naming_conventions_of_the_International_Phonetic_Alphabet)] is a lightweight and extremly fast HTTP server with all basics for [Node 10+](https://nodejs.org/docs/latest-v10.x/api/http.html), written in [TypeScript](https://www.typescriptlang.org/).
 
 ## Install
 

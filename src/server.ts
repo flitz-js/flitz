@@ -27,7 +27,7 @@ import { defaultErrorHandler, defaultNotFoundHandler } from './handlers';
  */
 export interface Flitz {
   /**
-   * A Flitz server itself itself is a HTTÜ request listener,
+   * A flitz server itself is a HTTP request listener,
    * which can be used in any compatible server instance, like
    * Node HTTP, e.g.
    */
