@@ -1,5 +1,9 @@
 # flitz
 
+## 0.8.0
+
+* update donation links to [open collective](https://opencollective.com/flitz) and [PayPal](https://paypal.me/MarcelKloubert)
+
 ## 0.7.0
 
 * [BREAKING CHANGE]: removed `addr` parameter from `listen()` method of `Flitz interface`
