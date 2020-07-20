@@ -1,6 +1,6 @@
 # flitz
 
-## 0.8.1
+## 0.8.2
 
 * update donation links to [open collective](https://opencollective.com/flitz) and [PayPal](https://paypal.me/MarcelKloubert)
 

@@ -428,7 +428,7 @@ function withMethod(opts: WithMethodOptions): Flitz {
   }
 
   if (typeof handler !== 'function') {
-    throw new TypeError('Error must be a function');
+    throw new TypeError('handler must be a function');
   }
 
   let options: RequestHandlerOptions;
