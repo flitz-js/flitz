@@ -87,9 +87,8 @@ export interface Flitz {
    * Starts listening.
    *
    * @param {number} port The TCP port.
-   * @param {string} [addr] The custom listener address. Default: 0.0.0.0 
    */
-  listen(port: number, addr?: string): Promise<void>;
+  listen(port: number): Promise<void>;
 
   /**
    * Registers a route for a OPTIONS request.
@@ -341,17 +340,13 @@ export function createServer(): Flitz {
     return this;
   };
 
-  flitz.listen = function (port: number, addr = '0.0.0.0') {
+  flitz.listen = function (port: number) {
     if (typeof port !== 'number') {
       throw new TypeError('port must be a number');
     }
 
     if (!(port >= 0 && port <= 65535)) {
       throw new TypeError('port must be a valid number between 0 and 65535');
-    }
-
-    if (typeof addr !== 'string') {
-      throw new TypeError('addr must be a string');
     }
 
     return new Promise((resolve, reject) => {
@@ -361,7 +356,7 @@ export function createServer(): Flitz {
         reject(err);
       });
 
-      instance.listen(port, addr, () => {
+      instance.listen(port, () => {
         resolve();
       });
     });

@@ -1,5 +1,9 @@
 # flitz
 
+## 0.7.0
+
+* [BREAKING CHANGE]: removed `addr` parameter from `listen()` method of `Flitz interface`
+
 ## 0.6.0
 
 * [BREAKING CHANGE]: functions (handlers, middlewares) are not wrapped with `bind()` anymore
