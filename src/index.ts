@@ -20,9 +20,6 @@
 
 import { createServer, Flitz } from './server';
 
-function a() {
-}
-
 const serverFactory = function (): Flitz {
   return createServer.apply(null, arguments as any);
 };
