@@ -1,6 +1,6 @@
 # flitz
 
-## 0.5.0
+## 0.5.3
 
 * `options` can also be an array of functions now
 * type checks of `options` parameter
