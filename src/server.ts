@@ -364,7 +364,7 @@ export function createServer(): Flitz {
 
   flitz.close = function () {
     return new Promise((resolve, reject) => {
-      instance?.close(err => {
+      instance!.close(err => {
         if (err) {
           reject(err);
         } else {
