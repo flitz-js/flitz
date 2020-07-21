@@ -363,7 +363,7 @@ export function createServer(): Flitz {
       throw new TypeError('handler must be a function');
     }
 
-    errorHandler = handler;
+    errorHandler = asAsync<RequestErrorHandler>(handler);
     return this;
   };
 
@@ -372,7 +372,7 @@ export function createServer(): Flitz {
       throw new TypeError('handler must be a function');
     }
 
-    notFoundHandler = handler;
+    notFoundHandler = asAsync<NotFoundHandler>(handler);
     return this;
   };
 
