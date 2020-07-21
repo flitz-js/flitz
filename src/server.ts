@@ -171,6 +171,15 @@ export interface Flitz {
   static(basePath: string, rootDir: string, cache?: boolean): this;
 
   /**
+   * Adds one or more global middlewares.
+   *
+   * @param {Middleware[]} [middlewares] The middlewares to add.
+   * 
+   * @returns {this}
+   */
+  use(...middlewares: Middleware[]): this;
+
+  /**
    * Registers a route for a TRACE request.
    * 
    * @param {RequestPath} path The path.
@@ -180,6 +189,8 @@ export interface Flitz {
   trace(path: RequestPath, handler: RequestHandler): this;
   trace(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 }
+
+type GetFunc<T> = () => T;
 
 /**
  * A middleware.
@@ -236,7 +247,7 @@ interface RequestHandlerContext {
   isPathValid: RequestPathValidator;
 }
 
-type RequestHandlerGroup = { [method: string]: RequestHandlerContext[] };
+type RequestHandlersGrouped = { [method: string]: RequestHandlerContext[] };
 
 /**
  * Options for a request handler.
@@ -270,10 +281,11 @@ export interface Response extends ServerResponse {
 
 interface WithMethodOptions {
   args: IArguments;
-  groupedHandlers: RequestHandlerGroup;
-  getErrorHandler: () => RequestErrorHandler;
-  server: Flitz;
+  getErrorHandler: GetFunc<RequestErrorHandler>;
+  groupedHandlers: RequestHandlersGrouped;
   method: string;
+  recompileHandlers: () => void;
+  server: Flitz;
 }
 
 /**
@@ -284,13 +296,23 @@ interface WithMethodOptions {
 export function createServer(): Flitz {
   let errorHandler: RequestErrorHandler = defaultErrorHandler;
   const getErrorHandler = () => errorHandler;
-  const groupedHandlers: RequestHandlerGroup = {};
-  let notFoundHandler: NotFoundHandler = defaultNotFoundHandler;
+  const globalMiddleWares: Middleware[] = [];
   let instance: IsOptional<Server>;
+  let notFoundHandler: NotFoundHandler = defaultNotFoundHandler;
+
+  const groupedHandlers: RequestHandlersGrouped = {};
+  let compiledHandlers: RequestHandlersGrouped = groupedHandlers;
+  const recompileHandlers = () => {
+    compiledHandlers = compileAllWithMiddlewares(
+      groupedHandlers,
+      globalMiddleWares,
+      getErrorHandler
+    );
+  };
 
   const flitz: any = async (req: IncomingMessage, res: ServerResponse) => {
     try {
-      const handler = groupedHandlers[req.method!]?.find(ctx => ctx.isPathValid(req))?.handler;
+      const handler = compiledHandlers[req.method!]?.find(ctx => ctx.isPathValid(req))?.handler;
 
       if (handler) {
         await handler(req, res);
@@ -309,31 +331,31 @@ export function createServer(): Flitz {
   });
 
   flitz.connect = function () {
-    return withMethod({ method: 'CONNECT', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'CONNECT', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
   flitz.delete = function () {
-    return withMethod({ method: 'DELETE', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'DELETE', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
   flitz.get = function () {
-    return withMethod({ method: 'GET', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'GET', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
   flitz.head = function () {
-    return withMethod({ method: 'HEAD', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'HEAD', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
   flitz.options = function () {
-    return withMethod({ method: 'OPTIONS', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'OPTIONS', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
   flitz.patch = function () {
-    return withMethod({ method: 'PATCH', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'PATCH', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
   flitz.post = function () {
-    return withMethod({ method: 'POST', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'POST', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
   flitz.put = function () {
-    return withMethod({ method: 'PUT', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'PUT', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
   flitz.trace = function () {
-    return withMethod({ method: 'TRACE', args: arguments, getErrorHandler, groupedHandlers, server: flitz });
+    return withMethod({ method: 'TRACE', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
   };
 
   flitz.setErrorHandler = function (handler: RequestErrorHandler) {
@@ -356,6 +378,17 @@ export function createServer(): Flitz {
 
   flitz.static = function (basePath: string, rootDir: string, cache = true) {
     return addStatic({ basePath, cache, rootDir, server: flitz });
+  };
+
+  flitz.use = function (...middlewares: Middleware[]) {
+    if (!middlewares.every(mw => typeof mw === 'function')) {
+      throw new TypeError('middlewares must be a list of functions');
+    }
+
+    globalMiddleWares.push(...middlewares);
+    recompileHandlers();
+
+    return this;
   };
 
   flitz.listen = function (port: number) {
@@ -420,6 +453,28 @@ function addStatic(opts: AddStatic) {
     createStaticPathValidator(opts.basePath),
     handler
   );
+}
+
+function compileAllWithMiddlewares(
+  groupedHandlers: RequestHandlersGrouped,
+  middlewares: Middleware[],
+  getErrorHandler: GetFunc<RequestErrorHandler>
+): RequestHandlersGrouped {
+  if (!middlewares.length) {
+    return groupedHandlers;
+  }
+
+  const compiledHandlers: RequestHandlersGrouped = {};
+  for (const method in groupedHandlers) {
+    compiledHandlers[method] = groupedHandlers[method].map(ctx => {
+      return {
+        handler: mergeHandler(ctx.handler, middlewares, getErrorHandler),
+        isPathValid: ctx.isPathValid
+      };
+    });
+  }
+
+  return compiledHandlers;
 }
 
 function createStaticHandler(rootDir: string): RequestHandler {
@@ -593,6 +648,7 @@ function withMethod(opts: WithMethodOptions): Flitz {
     handler,
     isPathValid
   });
+  opts.recompileHandlers();
 
   return opts.server;
 };

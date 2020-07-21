@@ -62,7 +62,8 @@ import { body } from '@flitz/body';
 const run = async () => {
   const app = flitz();
 
-  app.post('/', { use: [ body() ] }, async (req, res) => {
+  //             👇👇👇
+  app.post('/', [ body() ], async (req, res) => {
     const body = req.body as Buffer;
 
     res.write('Your body as string: ' + body.toString('utf8'));
