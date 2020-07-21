@@ -1,4 +1,4 @@
-[![npm](https://img.shields.io/npm/v/flitz.svg)](https://www.npmjs.com/package/flitz) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/flitz-js/flitz/pulls)
+[![npm](https://img.shields.io/npm/v/flitz.svg)](https://www.npmjs.com/package/flitz) ![last build](https://img.shields.io/github/workflow/status/flitz-js/flitz/Publish)](https://github.com/flitz-js/flitz/actions?query=workflow%3APublish) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/flitz-js/flitz/pulls)
 
 # flitz
 
