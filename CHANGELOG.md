@@ -1,5 +1,9 @@
 # flitz
 
+## 0.10.1
+
+* add `use()` for adding global middlewares
+
 ## 0.9.2
 
 * add `static()` method to flitz instance
