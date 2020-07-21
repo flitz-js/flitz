@@ -385,7 +385,7 @@ export function createServer(): Flitz {
       throw new TypeError('middlewares must be a list of functions');
     }
 
-    globalMiddleWares.push(...middlewares);
+    globalMiddleWares.push(...middlewares.map(mw => asAsync<Middleware>(mw)));
     recompileHandlers();
 
     return this;
@@ -453,6 +453,16 @@ function addStatic(opts: AddStatic) {
     createStaticPathValidator(opts.basePath),
     handler
   );
+}
+
+function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
+  if (func.constructor.name === "AsyncFunction") {
+    return func as TFunc;
+  }
+
+  return (async function (...args: any[]) {
+    return func(...args);
+  }) as any;
 }
 
 function compileAllWithMiddlewares(
@@ -636,7 +646,7 @@ function withMethod(opts: WithMethodOptions): Flitz {
   if (options.use?.length) {
     handler = mergeHandler(
       handler,
-      options.use.map(mw => mw),
+      options.use.map(mw => asAsync<Middleware>(mw)),
       opts.getErrorHandler
     );
   }
@@ -652,7 +662,7 @@ function withMethod(opts: WithMethodOptions): Flitz {
   }
 
   opts.groupedHandlers[opts.method].push({
-    handler,
+    handler: asAsync<RequestHandler>(handler),
     isPathValid
   });
   opts.recompileHandlers();

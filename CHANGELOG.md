@@ -1,6 +1,6 @@
 # flitz
 
-## 0.11.1
+## 0.11.2
 
 * can submit a single middleware now
 
