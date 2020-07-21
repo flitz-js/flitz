@@ -52,6 +52,45 @@ const run = async () => {
 run();
 ```
 
+### Middlewares
+
+```typescript
+import flitz from 'flitz';
+// s. https://github.com/flitz-js/body
+import { body } from '@flitz/body';
+
+const run = async () => {
+  const app = flitz();
+
+  app.post('/', { use: [ body() ] }, async (req, res) => {
+    const body = req.body as Buffer;
+
+    res.write('Your body as string: ' + body.toString('utf8'));
+    res.end();
+  });
+
+  await app.listen(3000);
+};
+
+run();
+```
+
+### Static files
+
+```typescript
+import flitz from 'flitz';
+
+const run = async () => {
+  const app = flitz();
+
+  app.static('/', '/path/to/my/local/files/to/serve');
+
+  await app.listen(3000);
+};
+
+run();
+```
+
 ## TypeScript
 
 TypeScript is optionally supported. The module contains its own [definition files](https://www.typescriptlang.org/docs/handbook/declaration-files/introduction.html).

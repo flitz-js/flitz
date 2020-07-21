@@ -1,5 +1,9 @@
 # flitz
 
+## 0.9.0
+
+* add `static()` method to flitz instance
+
 ## 0.8.4
 
 * fix: `instance` property of Flitz instance appears as enumerable property now

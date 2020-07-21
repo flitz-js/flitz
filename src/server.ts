@@ -18,9 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import fs from 'fs';
 import { createServer as createHttpServer, IncomingMessage, ServerResponse, Server } from 'http';
+import { isAbsolute as isAbsolutePath, join as joinPath, relative as relativePath, sep as pathSep } from 'path';
 import { CanBeNil, IsOptional } from '.';
 import { defaultErrorHandler, defaultNotFoundHandler } from './handlers';
+
+interface AddStatic {
+  basePath: string;
+  cache: boolean;
+  rootDir: string;
+  server: Flitz;
+}
+
+type FileWithData = { [path: string]: Buffer };
 
 /**
  * A Flitz instance.
@@ -149,6 +160,17 @@ export interface Flitz {
   setNotFoundHandler(handler: NotFoundHandler): this;
 
   /**
+   * Adds a GET handler, for using a local directory as static files.
+   *
+   * @param {string} basePath The base path of the request url.
+   * @param {string} rootDir The local root directory.
+   * @param {boolean} [cache] Load all files and cache them into memory. Default: (true) 
+   * 
+   * @returns {this}
+   */
+  static(basePath: string, rootDir: string, cache?: boolean): this;
+
+  /**
    * Registers a route for a TRACE request.
    * 
    * @param {RequestPath} path The path.
@@ -254,14 +276,6 @@ interface WithMethodOptions {
   method: string;
 }
 
-function isPathValidByRegex(path: RegExp) {
-  return (req: IncomingMessage) => path.test(req.url!);
-}
-
-function isPathValidByString(path: string) {
-  return (req: IncomingMessage) => req.url === path;
-}
-
 /**
  * Creates a new server instance.
  * 
@@ -340,6 +354,10 @@ export function createServer(): Flitz {
     return this;
   };
 
+  flitz.static = function (basePath: string, rootDir: string, cache = true) {
+    return addStatic({ basePath, cache, rootDir, server: flitz });
+  };
+
   flitz.listen = function (port: number) {
     if (typeof port !== 'number') {
       throw new TypeError('port must be a number');
@@ -375,6 +393,99 @@ export function createServer(): Flitz {
   };
 
   return flitz;
+}
+
+function addStatic(opts: AddStatic) {
+  if (typeof opts.basePath !== 'string') {
+    throw new TypeError('basePath must be a function');
+  }
+
+  if (typeof opts.rootDir !== 'string') {
+    throw new TypeError('rootDir must be a function');
+  }
+
+  let rootDir = opts.rootDir;
+  if (!isAbsolutePath(rootDir)) {
+    rootDir = joinPath(process.cwd(), rootDir);
+  }
+
+  let handler: RequestHandler;
+  if (opts.cache) {
+    handler = createStaticHandlerCached(rootDir);
+  } else {
+    handler = createStaticHandler(rootDir);
+  }
+
+  opts.server.get(
+    createStaticPathValidator(opts.basePath),
+    handler
+  );
+}
+
+function createStaticHandler(rootDir: string): RequestHandler {
+  return async (req, res) => {
+    const fullPath = joinPath(rootDir, req.url!);
+
+    if (fs.existsSync(fullPath)) {
+      if ((await fs.promises.stat(fullPath)).isFile()) {
+        fs.createReadStream(fullPath)
+          .pipe(res);
+
+        return;
+      }
+    }
+
+    res.writeHead(404);
+    res.end();
+  };
+}
+
+function createStaticHandlerCached(rootDir: string): RequestHandler {
+  const files: FileWithData = {};
+  loadAllFiles(rootDir, files, rootDir);
+
+  return async (req, res) => {
+    const data = files[req.url!];
+    if (data) {
+      res.writeHead(200);
+      res.write(data);
+    } else {
+      res.writeHead(404);
+    }
+
+    res.end();
+  };
+}
+
+function createStaticPathValidator(basePath: string): RequestPathValidator {
+  return (req) => req.url!.startsWith(basePath);
+}
+
+function isPathValidByRegex(path: RegExp) {
+  return (req: IncomingMessage) => path.test(req.url!);
+}
+
+function isPathValidByString(path: string) {
+  return (req: IncomingMessage) => req.url === path;
+}
+
+function loadAllFiles(dir: string, files: FileWithData, rootDir: string) {
+  for (const item of fs.readdirSync(dir)) {
+    const fullPath = joinPath(dir, item)
+      .split(pathSep)
+      .join('/');
+
+    const stats = fs.statSync(fullPath);
+    if (stats.isDirectory()) {
+      loadAllFiles(fullPath, files, rootDir);
+    } else if (stats.isFile()) {
+      const key = '/' + relativePath(rootDir, fullPath)
+        .split(pathSep)
+        .join('/');
+
+      files[key] = fs.readFileSync(fullPath);
+    }
+  }
 }
 
 function mergeHandler(
