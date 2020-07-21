@@ -215,9 +215,9 @@ export type NextFunction = () => void;
 export type NotFoundHandler = (request: IncomingMessage, response: ServerResponse) => Promise<any>;
 
 /**
- * Request handler options or list of middlewares.
+ * Request handler options or one or more middleware(s).
  */
-export type OptionsOrMiddlewares = RequestHandlerOptions | Middleware[];
+export type OptionsOrMiddlewares = RequestHandlerOptions | Middleware | Middleware[];
 
 /**
  * A request context.
@@ -601,10 +601,17 @@ function withMethod(opts: WithMethodOptions): Flitz {
   let options: RequestHandlerOptions;
   if (optionsOrMiddlewares) {
     if (Array.isArray(optionsOrMiddlewares)) {
+      // list of middlewares
       options = {
         use: optionsOrMiddlewares
       };
+    } else if (typeof optionsOrMiddlewares === 'function') {
+      // single middleware
+      options = {
+        use: [optionsOrMiddlewares]
+      };
     } else {
+      // options object
       options = optionsOrMiddlewares;
     }
   } else {

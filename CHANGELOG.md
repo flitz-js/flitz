@@ -1,5 +1,9 @@
 # flitz
 
+## 0.11.0
+
+* can submit a single middleware now
+
 ## 0.10.1
 
 * add `use()` for adding global middlewares
