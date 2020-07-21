@@ -290,7 +290,7 @@ export function createServer(): Flitz {
 
   // flitz.instance
   Object.defineProperty(flitz, 'instance', {
-    enumerable: false,
+    enumerable: true,
     get: () => instance
   });
 
