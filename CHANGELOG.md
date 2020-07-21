@@ -1,6 +1,6 @@
 # flitz
 
-## 0.9.0
+## 0.9.1
 
 * add `static()` method to flitz instance
 
