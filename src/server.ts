@@ -411,7 +411,7 @@ function addStatic(opts: AddStatic) {
 
   let handler: RequestHandler;
   if (opts.cache) {
-    handler = createStaticHandlerCached(rootDir);
+    handler = createStaticHandlerCached(rootDir, opts.basePath);
   } else {
     handler = createStaticHandler(rootDir);
   }
@@ -440,9 +440,9 @@ function createStaticHandler(rootDir: string): RequestHandler {
   };
 }
 
-function createStaticHandlerCached(rootDir: string): RequestHandler {
+function createStaticHandlerCached(rootDir: string, basePath: string): RequestHandler {
   const files: FileWithData = {};
-  loadAllFiles(rootDir, files, rootDir);
+  loadAllFiles(rootDir, files, rootDir, basePath);
 
   return async (req, res) => {
     const data = files[req.url!];
@@ -469,7 +469,7 @@ function isPathValidByString(path: string) {
   return (req: IncomingMessage) => req.url === path;
 }
 
-function loadAllFiles(dir: string, files: FileWithData, rootDir: string) {
+function loadAllFiles(dir: string, files: FileWithData, rootDir: string, basePath: string) {
   for (const item of fs.readdirSync(dir)) {
     const fullPath = joinPath(dir, item)
       .split(pathSep)
@@ -477,9 +477,10 @@ function loadAllFiles(dir: string, files: FileWithData, rootDir: string) {
 
     const stats = fs.statSync(fullPath);
     if (stats.isDirectory()) {
-      loadAllFiles(fullPath, files, rootDir);
+      loadAllFiles(fullPath, files, rootDir, basePath);
     } else if (stats.isFile()) {
-      const key = '/' + relativePath(rootDir, fullPath)
+      const bpSuffix = basePath.endsWith('/') ? '' : '/';
+      const key = basePath + bpSuffix + relativePath(rootDir, fullPath)
         .split(pathSep)
         .join('/');
 
