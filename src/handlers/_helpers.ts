@@ -147,9 +147,11 @@ export function withMethod(opts: WithMethodOptions): Flitz {
   if (typeof options !== 'object') {
     throw new TypeError('optionsOrMiddlewares must be an object or array');
   }
-  if (options.use?.length) {
-    if (!options.use.every(mw => typeof mw === 'function')) {
-      throw new TypeError('optionsOrMiddlewares must be an array of functions');
+
+  const middlewares = options.use?.filter(mw => !!mw);
+  if (middlewares?.length) {
+    if (!middlewares.every(mw => typeof mw === 'function')) {
+      throw new TypeError('optionsOrMiddlewares.use must be an array of functions');
     }
   }
 
@@ -159,10 +161,10 @@ export function withMethod(opts: WithMethodOptions): Flitz {
   }
 
   // setup request handler
-  if (options.use?.length) {
+  if (middlewares?.length) {
     handler = mergeHandler(
       handler,
-      options.use.map(mw => asAsync<Middleware>(mw)),
+      middlewares.map(mw => asAsync<Middleware>(mw)),
       opts.getErrorHandler
     );
   }

@@ -1,5 +1,9 @@
 # flitz
 
+## 0.14.0
+
+* improvements
+
 ## 0.13.0
 
 * fixed previous commit
