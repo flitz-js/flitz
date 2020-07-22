@@ -19,20 +19,7 @@
 // SOFTWARE.
 
 import { IncomingMessage, ServerResponse } from 'http';
-import { NotFoundHandler, RequestErrorHandler } from '.';
-
-/**
- * The default error handler.
- */
-export const defaultErrorHandler: RequestErrorHandler = async (err: any, req: IncomingMessage, res: ServerResponse): Promise<any> => {
-  console.error('[flitz]', err);
-
-  if (!res.headersSent) {
-    res.writeHead(500);
-  }
-
-  res.end();
-};
+import { NotFoundHandler } from '..';
 
 /**
  * The default 'not found' handler.

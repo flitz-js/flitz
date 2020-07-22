@@ -18,20 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import fs from 'fs';
 import { createServer as createHttpServer, IncomingMessage, ServerResponse, Server } from 'http';
-import { isAbsolute as isAbsolutePath, join as joinPath, relative as relativePath, sep as pathSep } from 'path';
-import { CanBeNil, IsOptional } from '.';
-import { defaultErrorHandler, defaultNotFoundHandler } from './handlers';
-
-interface AddStatic {
-  basePath: string;
-  cache: boolean;
-  rootDir: string;
-  server: Flitz;
-}
-
-type FileWithData = { [path: string]: Buffer };
+import { addStatic } from './static';
+import { CanBeNil, IsOptional } from '..';
+import { asAsync } from '../_internals';
+import { defaultErrorHandler, defaultNotFoundHandler } from '../handlers';
+import { compileAllWithMiddlewares, RequestHandlersGrouped, withMethod, WithMethodOptions } from '../handlers/_internals';
 
 /**
  * A Flitz instance.
@@ -190,8 +182,6 @@ export interface Flitz {
   trace(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
 }
 
-type GetFunc<T> = () => T;
-
 /**
  * A middleware.
  * 
@@ -242,13 +232,6 @@ export type RequestErrorHandler = (error: any, request: IncomingMessage, respons
  */
 export type RequestHandler = (request: Request, response: Response) => Promise<any>;
 
-interface RequestHandlerContext {
-  handler: RequestHandler;
-  isPathValid: RequestPathValidator;
-}
-
-type RequestHandlersGrouped = { [method: string]: RequestHandlerContext[] };
-
 /**
  * Options for a request handler.
  */
@@ -279,14 +262,7 @@ export type RequestPathValidator = (request: IncomingMessage) => boolean;
 export interface Response extends ServerResponse {
 }
 
-interface WithMethodOptions {
-  args: IArguments;
-  getErrorHandler: GetFunc<RequestErrorHandler>;
-  groupedHandlers: RequestHandlersGrouped;
-  method: string;
-  recompileHandlers: () => void;
-  server: Flitz;
-}
+const HTTP_METHODS = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE'];
 
 /**
  * Creates a new server instance.
@@ -330,33 +306,13 @@ export function createServer(): Flitz {
     get: () => instance
   });
 
-  flitz.connect = function () {
-    return withMethod({ method: 'CONNECT', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
-  flitz.delete = function () {
-    return withMethod({ method: 'DELETE', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
-  flitz.get = function () {
-    return withMethod({ method: 'GET', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
-  flitz.head = function () {
-    return withMethod({ method: 'HEAD', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
-  flitz.options = function () {
-    return withMethod({ method: 'OPTIONS', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
-  flitz.patch = function () {
-    return withMethod({ method: 'PATCH', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
-  flitz.post = function () {
-    return withMethod({ method: 'POST', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
-  flitz.put = function () {
-    return withMethod({ method: 'PUT', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
-  flitz.trace = function () {
-    return withMethod({ method: 'TRACE', args: arguments, getErrorHandler, groupedHandlers, recompileHandlers, server: flitz });
-  };
+  // request handler methods
+  // .connect(), .get(), .post(), etc.
+  for (const method of HTTP_METHODS) {
+    flitz[method.toLowerCase()] = createHandlerMethod(
+      { method, arguments, flitz, getErrorHandler, groupedHandlers, recompileHandlers }
+    );
+  }
 
   flitz.setErrorHandler = function (handler: RequestErrorHandler) {
     if (typeof handler !== 'function') {
@@ -377,7 +333,7 @@ export function createServer(): Flitz {
   };
 
   flitz.static = function (basePath: string, rootDir: string, cache = true) {
-    return addStatic({ basePath, cache, rootDir, server: flitz });
+    return addStatic({ basePath, cache, flitz, rootDir });
   };
 
   flitz.use = function (...middlewares: Middleware[]) {
@@ -428,244 +384,6 @@ export function createServer(): Flitz {
   return flitz;
 }
 
-function addStatic(opts: AddStatic) {
-  if (typeof opts.basePath !== 'string') {
-    throw new TypeError('basePath must be a function');
-  }
-
-  if (typeof opts.rootDir !== 'string') {
-    throw new TypeError('rootDir must be a function');
-  }
-
-  let rootDir = opts.rootDir;
-  if (!isAbsolutePath(rootDir)) {
-    rootDir = joinPath(process.cwd(), rootDir);
-  }
-
-  let handler: RequestHandler;
-  if (opts.cache) {
-    handler = createStaticHandlerCached(rootDir, opts.basePath);
-  } else {
-    handler = createStaticHandler(rootDir);
-  }
-
-  opts.server.get(
-    createStaticPathValidator(opts.basePath),
-    handler
-  );
+function createHandlerMethod(opts: WithMethodOptions): Function {
+  return () => withMethod(opts);
 }
-
-function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
-  if (func.constructor.name === "AsyncFunction") {
-    return func as TFunc;
-  }
-
-  return (async function (...args: any[]) {
-    return func(...args);
-  }) as any;
-}
-
-function compileAllWithMiddlewares(
-  groupedHandlers: RequestHandlersGrouped,
-  middlewares: Middleware[],
-  getErrorHandler: GetFunc<RequestErrorHandler>
-): RequestHandlersGrouped {
-  if (!middlewares.length) {
-    return groupedHandlers;
-  }
-
-  const compiledHandlers: RequestHandlersGrouped = {};
-  for (const method in groupedHandlers) {
-    compiledHandlers[method] = groupedHandlers[method].map(ctx => {
-      return {
-        handler: mergeHandler(ctx.handler, middlewares, getErrorHandler),
-        isPathValid: ctx.isPathValid
-      };
-    });
-  }
-
-  return compiledHandlers;
-}
-
-function createStaticHandler(rootDir: string): RequestHandler {
-  return async (req, res) => {
-    const fullPath = joinPath(rootDir, req.url!);
-
-    if (fs.existsSync(fullPath)) {
-      if ((await fs.promises.stat(fullPath)).isFile()) {
-        fs.createReadStream(fullPath)
-          .pipe(res);
-
-        return;
-      }
-    }
-
-    res.writeHead(404);
-    res.end();
-  };
-}
-
-function createStaticHandlerCached(rootDir: string, basePath: string): RequestHandler {
-  const files: FileWithData = {};
-  loadAllFiles(rootDir, files, rootDir, basePath);
-
-  return async (req, res) => {
-    const data = files[req.url!];
-    if (data) {
-      res.writeHead(200);
-      res.write(data);
-    } else {
-      res.writeHead(404);
-    }
-
-    res.end();
-  };
-}
-
-function createStaticPathValidator(basePath: string): RequestPathValidator {
-  return (req) => req.url!.startsWith(basePath);
-}
-
-function isPathValidByRegex(path: RegExp) {
-  return (req: IncomingMessage) => path.test(req.url!);
-}
-
-function isPathValidByString(path: string) {
-  return (req: IncomingMessage) => req.url === path;
-}
-
-function loadAllFiles(dir: string, files: FileWithData, rootDir: string, basePath: string) {
-  for (const item of fs.readdirSync(dir)) {
-    const fullPath = joinPath(dir, item)
-      .split(pathSep)
-      .join('/');
-
-    const stats = fs.statSync(fullPath);
-    if (stats.isDirectory()) {
-      loadAllFiles(fullPath, files, rootDir, basePath);
-    } else if (stats.isFile()) {
-      const bpSuffix = basePath.endsWith('/') ? '' : '/';
-      const key = basePath + bpSuffix + relativePath(rootDir, fullPath)
-        .split(pathSep)
-        .join('/');
-
-      files[key] = fs.readFileSync(fullPath);
-    }
-  }
-}
-
-function mergeHandler(
-  handler: RequestHandler,
-  middlewares: Middleware[],
-  getErrorHandler: () => RequestErrorHandler
-): RequestHandler {
-  return async function (req, res) {
-    let i = -1;
-
-    const handleError = (err: any) => {
-      return getErrorHandler()(err, req, res);
-    };
-
-    const next = () => {
-      const mw = middlewares[++i];
-
-      if (mw) {
-        mw(req, res, next).catch(handleError);
-      } else {
-        handler(req, res).catch(handleError);
-      }
-    };
-
-    next();
-  };
-}
-
-function withMethod(opts: WithMethodOptions): Flitz {
-  const path: RequestPath = opts.args[0];
-  if (
-    !(
-      typeof path === 'string' ||
-      path instanceof RegExp ||
-      typeof path === 'function'
-    )
-  ) {
-    throw new TypeError('path must be of type string, function or RegEx');
-  }
-
-  let optionsOrMiddlewares: CanBeNil<OptionsOrMiddlewares>;
-  let handler: RequestHandler;
-  if (opts.args.length < 3) {
-    // args[1]: RequestHandler
-    handler = opts.args[1];
-  } else {
-    // args[1]: OptionsOrMiddlewares
-    // args[2]: RequestHandler
-    optionsOrMiddlewares = opts.args[1];
-    handler = opts.args[2];
-  }
-
-  if (typeof handler !== 'function') {
-    throw new TypeError('handler must be a function');
-  }
-
-  let options: RequestHandlerOptions;
-  if (optionsOrMiddlewares) {
-    if (Array.isArray(optionsOrMiddlewares)) {
-      // list of middlewares
-      options = {
-        use: optionsOrMiddlewares
-      };
-    } else if (typeof optionsOrMiddlewares === 'function') {
-      // single middleware
-      options = {
-        use: [optionsOrMiddlewares]
-      };
-    } else {
-      // options object
-      options = optionsOrMiddlewares;
-    }
-  } else {
-    options = {};
-  }
-
-  if (typeof options !== 'object') {
-    throw new TypeError('optionsOrMiddlewares must be an object or array');
-  }
-  if (options.use?.length) {
-    if (!options.use.every(mw => typeof mw === 'function')) {
-      throw new TypeError('optionsOrMiddlewares must be an array of functions');
-    }
-  }
-
-  if (!opts.groupedHandlers[opts.method]) {
-    // group is not initialized yet
-    opts.groupedHandlers[opts.method] = [];
-  }
-
-  // setup request handler
-  if (options.use?.length) {
-    handler = mergeHandler(
-      handler,
-      options.use.map(mw => asAsync<Middleware>(mw)),
-      opts.getErrorHandler
-    );
-  }
-
-  // path validator
-  let isPathValid: RequestPathValidator;
-  if (typeof path === 'function') {
-    isPathValid = path;
-  } else if (path instanceof RegExp) {
-    isPathValid = isPathValidByRegex(path);
-  } else {
-    isPathValid = isPathValidByString(path);
-  }
-
-  opts.groupedHandlers[opts.method].push({
-    handler: asAsync<RequestHandler>(handler),
-    isPathValid
-  });
-  opts.recompileHandlers();
-
-  return opts.server;
-};

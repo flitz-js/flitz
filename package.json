@@ -1,6 +1,6 @@
 {
   "name": "flitz",
-  "version": "0.11.5",
+  "version": "0.12.0",
   "description": "A lightweight and extremly fast HTTP server with all basics.",
   "main": "lib/index.js",
   "files": [
