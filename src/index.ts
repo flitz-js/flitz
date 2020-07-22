@@ -20,12 +20,6 @@
 
 import { createServer, Flitz } from './server';
 
-const serverFactory = function (): Flitz {
-  return createServer.apply(null, arguments as any);
-};
-
-exports = module.exports = serverFactory;
-
 /**
  * A type, which can be null or undefined.
  */
@@ -35,6 +29,12 @@ export type CanBeNil<T> = T | null | undefined;
  * A type, which can be undefined.
  */
 export type IsOptional<T> = T | undefined;
+
+const serverFactory = function (): Flitz {
+  return createServer.apply(null, arguments as any);
+};
+
+exports = module.exports = serverFactory;
 
 export * from './handlers';
 export * from './server';

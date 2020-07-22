@@ -1,5 +1,13 @@
 # flitz
 
+## 0.13.0
+
+* fixed previous commit
+
+## 0.12.0
+
+* code cleanups
+
 ## 0.11.5
 
 * can submit a single middleware now

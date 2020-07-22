@@ -20,7 +20,7 @@
 
 import { IncomingMessage } from 'http';
 import { CanBeNil, Flitz, Middleware, OptionsOrMiddlewares, RequestErrorHandler, RequestHandler, RequestHandlerOptions, RequestPath, RequestPathValidator } from '..';
-import { asAsync } from '../_internals';
+import { asAsync } from '../_helpers';
 
 type GetFunc<T> = () => T;
 
@@ -32,7 +32,7 @@ export interface RequestHandlerContext {
 export type RequestHandlersGrouped = { [method: string]: RequestHandlerContext[] };
 
 export interface WithMethodOptions {
-  arguments: IArguments;
+  arguments?: IArguments;
   flitz: Flitz;
   getErrorHandler: GetFunc<RequestErrorHandler>;
   groupedHandlers: RequestHandlersGrouped;
@@ -97,7 +97,7 @@ function mergeHandler(
 }
 
 export function withMethod(opts: WithMethodOptions): Flitz {
-  const path: RequestPath = opts.arguments[0];
+  const path: RequestPath = opts.arguments![0];
   if (
     !(
       typeof path === 'string' ||
@@ -110,14 +110,14 @@ export function withMethod(opts: WithMethodOptions): Flitz {
 
   let optionsOrMiddlewares: CanBeNil<OptionsOrMiddlewares>;
   let handler: RequestHandler;
-  if (opts.arguments.length < 3) {
+  if (opts.arguments!.length < 3) {
     // args[1]: RequestHandler
-    handler = opts.arguments[1];
+    handler = opts.arguments![1];
   } else {
     // args[1]: OptionsOrMiddlewares
     // args[2]: RequestHandler
-    optionsOrMiddlewares = opts.arguments[1];
-    handler = opts.arguments[2];
+    optionsOrMiddlewares = opts.arguments![1];
+    handler = opts.arguments![2];
   }
 
   if (typeof handler !== 'function') {

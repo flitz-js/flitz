@@ -20,7 +20,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { Flitz, RequestHandler, RequestPathValidator } from '../server';
+import { Flitz, RequestHandler, RequestPathValidator } from '.';
 
 interface AddStaticOptions {
   basePath: string;

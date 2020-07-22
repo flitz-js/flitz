@@ -19,11 +19,11 @@
 // SOFTWARE.
 
 import { createServer as createHttpServer, IncomingMessage, ServerResponse, Server } from 'http';
-import { addStatic } from './static';
+import { addStatic } from './_static';
 import { CanBeNil, IsOptional } from '..';
-import { asAsync } from '../_internals';
+import { asAsync } from '../_helpers';
 import { defaultErrorHandler, defaultNotFoundHandler } from '../handlers';
-import { compileAllWithMiddlewares, RequestHandlersGrouped, withMethod, WithMethodOptions } from '../handlers/_internals';
+import { compileAllWithMiddlewares, RequestHandlersGrouped, withMethod, WithMethodOptions } from '../handlers/_helpers';
 
 /**
  * A Flitz instance.
@@ -163,15 +163,6 @@ export interface Flitz {
   static(basePath: string, rootDir: string, cache?: boolean): this;
 
   /**
-   * Adds one or more global middlewares.
-   *
-   * @param {Middleware[]} [middlewares] The middlewares to add.
-   * 
-   * @returns {this}
-   */
-  use(...middlewares: Middleware[]): this;
-
-  /**
    * Registers a route for a TRACE request.
    * 
    * @param {RequestPath} path The path.
@@ -180,6 +171,15 @@ export interface Flitz {
    */
   trace(path: RequestPath, handler: RequestHandler): this;
   trace(path: RequestPath, optionsOrMiddlewares: OptionsOrMiddlewares, handler: RequestHandler): this;
+
+  /**
+   * Adds one or more global middlewares.
+   *
+   * @param {Middleware[]} [middlewares] The middlewares to add.
+   * 
+   * @returns {this}
+   */
+  use(...middlewares: Middleware[]): this;
 }
 
 /**
@@ -310,7 +310,7 @@ export function createServer(): Flitz {
   // .connect(), .get(), .post(), etc.
   for (const method of HTTP_METHODS) {
     flitz[method.toLowerCase()] = createHandlerMethod(
-      { method, arguments, flitz, getErrorHandler, groupedHandlers, recompileHandlers }
+      { method, flitz, getErrorHandler, groupedHandlers, recompileHandlers }
     );
   }
 
@@ -337,11 +337,12 @@ export function createServer(): Flitz {
   };
 
   flitz.use = function (...middlewares: Middleware[]) {
-    if (!middlewares.every(mw => typeof mw === 'function')) {
+    const moreMiddlewares = middlewares.filter(mw => !!mw);
+    if (!moreMiddlewares.every(mw => typeof mw === 'function')) {
       throw new TypeError('middlewares must be a list of functions');
     }
 
-    globalMiddleWares.push(...middlewares.map(mw => asAsync<Middleware>(mw)));
+    globalMiddleWares.push(...moreMiddlewares.map(mw => asAsync<Middleware>(mw)));
     recompileHandlers();
 
     return this;
@@ -385,5 +386,10 @@ export function createServer(): Flitz {
 }
 
 function createHandlerMethod(opts: WithMethodOptions): Function {
-  return () => withMethod(opts);
+  return function () {
+    return withMethod({
+      ...opts,
+      arguments
+    });
+  };
 }
