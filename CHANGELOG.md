@@ -1,5 +1,10 @@
 # flitz
 
+## 0.15.0
+
+* TypeScript `^4.0.3`
+* bugfixes
+
 ## 0.14.0
 
 * improvements

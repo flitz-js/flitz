@@ -33,11 +33,11 @@ type FileWithData = { [path: string]: Buffer };
 
 export function addStatic(opts: AddStaticOptions) {
   if (typeof opts.basePath !== 'string') {
-    throw new TypeError('basePath must be a function');
+    throw new TypeError('basePath must be a string');
   }
 
   if (typeof opts.rootDir !== 'string') {
-    throw new TypeError('rootDir must be a function');
+    throw new TypeError('rootDir must be a string');
   }
 
   let rootDir = opts.rootDir;
