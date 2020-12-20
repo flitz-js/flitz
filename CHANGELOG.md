@@ -1,5 +1,11 @@
 # flitz
 
+## 0.16.0
+
+* TypeScript `^4.1.3`
+* Node.js `^12.0.0`
+* compiler fixes
+
 ## 0.15.0
 
 * TypeScript `^4.0.3`

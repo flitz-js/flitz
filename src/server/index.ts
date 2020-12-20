@@ -365,7 +365,7 @@ export function createServer(): Flitz {
       });
 
       instance.listen(port, () => {
-        resolve();
+        resolve(undefined);
       });
     });
   };
@@ -376,7 +376,7 @@ export function createServer(): Flitz {
         if (err) {
           reject(err);
         } else {
-          resolve();
+          resolve(undefined);
         }
       });
     });
