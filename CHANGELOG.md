@@ -1,5 +1,9 @@
 # flitz
 
+## 0.18.0
+
+* `isFlitz` property is add to any flitz instance now
+
 ## 0.17.0
 
 * TypeScript `^4.1.3`

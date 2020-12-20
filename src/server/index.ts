@@ -87,6 +87,11 @@ export interface Flitz {
   readonly instance?: IsOptional<Server>;
 
   /**
+   * Indicates if that instance is a flitz instance or not.
+   */
+  readonly isFlitz: true;
+
+  /**
    * Starts listening.
    *
    * @param {number} port The TCP port.
@@ -304,6 +309,12 @@ export function createServer(): Flitz {
   Object.defineProperty(flitz, 'instance', {
     enumerable: true,
     get: () => instance
+  });
+
+  // flitz.isFlitz
+  Object.defineProperty(flitz, 'isFlitz', {
+    enumerable: true,
+    get: () => true
   });
 
   // request handler methods
